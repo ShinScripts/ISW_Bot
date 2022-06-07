@@ -1,0 +1,1 @@
+export { snipeStruct } from './snipeStruct';
