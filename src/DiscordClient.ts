@@ -7,7 +7,7 @@ import 'dotenv/config';
 declare module 'discord.js' {
 	export interface Client {
 		commands: Collection<string, any>;
-		messageCache: Collection<string, string>;
+		messageCache: Collection<string, snipeStruct[]>;
 		snipes: Collection<string, snipeStruct>;
 	}
 }
@@ -33,21 +33,38 @@ export class Client extends BaseClient {
 			if (command) {
 				command.run(this, message, args);
 			} else {
+				const arr = [];
 				const avatarHash = message.author.avatar;
 
-				this.messageCache.set(message.channel.id, {
+				const messageCache = this.messageCache.get(message.channel.id) as snipeStruct[];
+				if (messageCache != undefined) {
+					if (messageCache.length < 200) {
+						messageCache.forEach((value) => {
+							arr.push(value);
+						});
+					}
+				}
+
+				arr.push({
 					author: message.author.tag,
+					ID: message.id,
 					authorAvatarURL: `https://cdn.discordapp.com/avatars/${message.author.id}/${avatarHash}${
 						avatarHash.startsWith('_a') ? '.gif' : '.png'
 					}?size=4096`,
 					content: message.content,
 				});
+
+				this.messageCache.set(message.channel.id, arr);
+				console.log(messageCache?.length);
 			}
 		});
 
 		this.on('messageDelete', function (message) {
 			const channelID = message.channel.id;
-			this.snipes.set(channelID, this.messageCache.get(channelID));
+			this.snipes.set(
+				channelID,
+				this.messageCache.get(channelID).find((snipe: snipeStruct) => snipe.ID === message.id)
+			);
 		});
 
 		this.once('ready', async function () {
