@@ -55,7 +55,6 @@ export class Client extends BaseClient {
 				});
 
 				this.messageCache.set(message.channel.id, arr);
-				console.log(messageCache?.length);
 			}
 		});
 
