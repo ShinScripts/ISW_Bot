@@ -7,30 +7,33 @@ import 'dotenv/config';
 declare module 'discord.js' {
 	export interface Client {
 		commands: Collection<string, any>;
-		messageCache: Collection<string, snipeStruct[]>;
-		snipes: Collection<string, snipeStruct>;
+		messageCache: Map<string, snipeStruct[]>;
+		snipes: Map<string, snipeStruct>;
 	}
 }
 
 export class Client extends BaseClient {
+	private readonly prefix = process.env.PREFIX;
+
 	constructor(options: ClientOptions) {
 		super(options);
 	}
 
 	public async init() {
+		const prefix = this.prefix;
+
 		this.commands = new Collection();
-		this.messageCache = new Collection();
-		this.snipes = new Collection();
+		this.messageCache = new Map();
+		this.snipes = new Map();
 
 		this.on('messageCreate', async function (message) {
 			if (message.author.bot) return;
 
-			const prefix = process.env.PREFIX;
 			const args = message.content.slice(prefix.length).trim().split(/ +/);
 			const cmd = args.shift().toLowerCase();
 
 			const command = this.commands.get(cmd);
-			if (command) {
+			if (command && message.content.toLowerCase().startsWith(prefix)) {
 				command.run(this, message, args);
 			} else {
 				const arr = [];
@@ -60,10 +63,14 @@ export class Client extends BaseClient {
 
 		this.on('messageDelete', function (message) {
 			const channelID = message.channel.id;
-			this.snipes.set(
-				channelID,
-				this.messageCache.get(channelID).find((snipe: snipeStruct) => snipe.ID === message.id)
-			);
+			try {
+				this.snipes.set(
+					channelID,
+					this.messageCache.get(channelID).find((snipe: snipeStruct) => snipe.ID === message.id)
+				);
+			} catch (e) {
+				consola.error(e);
+			}
 		});
 
 		this.once('ready', async function () {

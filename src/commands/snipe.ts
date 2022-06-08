@@ -15,7 +15,7 @@ export default {
 			embeds: [
 				new MessageEmbed()
 					.setAuthor({
-						name: `Message sent by ${snipe.author}`,
+						name: `Message deleted by ${snipe.author}`,
 						iconURL: snipe.authorAvatarURL,
 					})
 					.setColor('RANDOM')
